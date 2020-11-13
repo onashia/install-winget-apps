@@ -7,7 +7,7 @@
     .DESCRIPTION
         Installs the requested application after first checking that WinGet is present on the system
     .PARAMATER App
-        The application to be installed
+        The application requested to be installed
     .EXAMPLE
         Start-Install -App 'Notepad++.Notepad++'
     .LINKS
@@ -33,11 +33,9 @@ function Get-Winget {
     .NAME
         Get-Winget
     .SYNOPSIS
-        Download and install the WinGet appx bundle
+        Download and install WinGet
     .DESCRIPTION
-        Download the WinGet appx bundle to the temp direcoty at C:\Windows\Temp and then silently install it
-    .PARAMETER Check
-        Checks to make sure that the download is succesful
+        Download the WinGet appx bundle to the Windows temp directory and then install it
     .EXAMPLE
         Get-Winget
     .LINKS
@@ -46,60 +44,59 @@ function Get-Winget {
         https://winstall.app/
     #>
 
-    # Redirect URL to the latest version of WinGet
+    # Redirect URL points to the latest version of WinGet
     $WingetUrl = 'winget.onashia.com' 
-    # Path for downloading WinGet
-    $Directory = ('{0}\temp\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.appxbundle' -f $env:windir)
+    # Path to store WinGet
+    $FilePath = ('{0}\temp\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.appxbundle' -f $env:windir)
 
-    # Redirect URL to the latest hash of WinGet
+    # Redirect URL points to the latest hash of WinGet
     $WingetHash = 'hash.onashia.com'
-    # Path for downloading the WinGet hash
-    $HashDirectory = ('{0}\temp\Microsoft.DesktopAppInstaller.SHA256.txt' -f $env:windir)
-
-    # If WinGet is unable to be downloaded stop running the function
-    Write-Host 'Downloading WinGet...'
+    # Path to store the WinGet hash
+    $HashPath = ('{0}\temp\Microsoft.DesktopAppInstaller.SHA256.txt' -f $env:windir)
+    
     try {
+        # Disable progress bars during download as they significantly slow down speed
         $ProgressPreference = 'SilentlyContinue'
-        Invoke-WebRequest $WingetUrl -OutFile $Directory
-        $ProgressPreference = 'Continue'
+
+        # Download WinGet
+        Write-Host 'Downloading WinGet...'
+        Invoke-WebRequest $WingetUrl -OutFile $FilePath
+        
+        # Download WinGet hash value
+        Write-Host 'Downloading WinGet hash...'
+        Invoke-WebRequest $WingetHash -OutFile $HashPath
     } catch {
-        Write-Host 'Unable to download WinGet. Please try again...'
+        Write-Host 'Unable to download files, please try again...'
         break
     }    
 
-    # Download the latest WinGet hash value
-    Write-Host 'Downloading WinGet hash...'
-    try {
-        $ProgressPreference = 'SilentlyContinue'
-        Invoke-WebRequest $WingetHash -OutFile $HashDirectory
-        $ProgressPreference = 'Continue'
-    } catch {
-        Write-Host 'Unable to download WinGet hash. Please try again...'
-        break
-    }
-
     # Verify hash of WinGet is correct
     Write-Host 'Verifying integrity of WinGet...'
-    $VerifyHash = Check-Hash $HashDirectory $Directory
+    $VerifyHash = Check-Hash $HashPath $FilePath
 
-    # Install WinGet from the Windows temp directory
+    # Install WinGet from the Windows temp directory if the file hash has been verified
     if ($VerifyHash -eq 'true') {
         Write-Host 'Installing WinGet...'
-        Add-AppxPackage -Path $Directory
+        Add-AppxPackage -Path $FilePath
+
+        # Re-enable progress bars within powershell
+        $ProgressPreference = 'Continue'
+    } else {
+        break
     }
 }
 
-function Check-Hash($Value, $File) {
+function Check-Hash($HashPath, $FilePath) {
     <#
     .NAME
         Check-Hash
     .SYNOPSIS
-        Verify original hash matches the hash value of the new file
+        Verify a published hash matches a file hash
     .DESCRIPTION
-        Verify the original hash value matches the hash value of the new file and return the result
-    .PARAMATER Value
+        Verify a published hash matches a file hash and return the result
+    .PARAMATER HashPath
         The correct hash value stored in a text document
-    .PARAMETER File
+    .PARAMETER FilePath
         The file on which the has value will be compared to
     .EXAMPLE
         $result = Get-Hash C:\hash.txt C:\file.appxbundle
@@ -108,18 +105,18 @@ function Check-Hash($Value, $File) {
         https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/get-filehash
     #>
 
-    # Get the hash value stored within $Value
-    $PublishedHash = Get-Content $Value -First 1
+    # Get the hash value stored within the $HashPath file
+    $PublishedHash = Get-Content $HashPath -First 1
     
-    # Compute the hash of the $File
-    $FileHash = Get-FileHash $File -Algorithm SHA256
+    # Compute the hash of the the file located at $FilePath
+    $FileHash = Get-FileHash $FilePath -Algorithm SHA256
     
-    # If the hash values do not match stop running the function
+    # Return the result from comparing the published hash to the file hash
     if ($PublishedHash -eq $FileHash.Hash) {
         Write-Host 'Succesfully verified file hash'
         return 'true'
     } else {
-        Write-Host 'The hash of the filedoes not match the published hash value. Please try downloading again...'
-        break
+        Write-Host 'The hash of the file does not match the published hash value. Please try downloading again...'
+        return 'false'
     }
 }
