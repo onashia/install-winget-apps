@@ -1,4 +1,50 @@
-﻿function Start-Install($App) {
+﻿Add-Type -AssemblyName PresentationCore, PresentationFramework
+
+#region Design GUI
+
+$Xaml = @"
+            <Window
+                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                Title="Install Apps" Height="450" Width="800">
+            <Grid>
+                <Label x:Name="Web_Browsers" Content="Web Browsers" HorizontalAlignment="Left" Margin="30,18,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="16"/>
+                <CheckBox x:Name="Chrome" Content="Chrome" HorizontalAlignment="Left" Margin="40,54,0,0" VerticalAlignment="Top"/>
+                <CheckBox x:Name="Firefox" Content="Firefox" HorizontalAlignment="Left" Margin="40,74,0,0" VerticalAlignment="Top"/>
+                <CheckBox x:Name="Edge" Content="Edge" HorizontalAlignment="Left" Margin="40,94,0,0" VerticalAlignment="Top"/>
+                <CheckBox x:Name="Opera" Content="Opera" HorizontalAlignment="Left" Margin="40,114,0,0" VerticalAlignment="Top"/>
+
+                <Label x:Name="Media" Content="Media" HorizontalAlignment="Left" Margin="30,153,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="16"/>
+                <CheckBox x:Name="VLC" Content="VLC" HorizontalAlignment="Left" Margin="40,189,0,0" VerticalAlignment="Top"/>
+                <CheckBox x:Name="iTunes" Content="iTunes" HorizontalAlignment="Left" Margin="40,209,0,0" VerticalAlignment="Top"/>
+                <CheckBox x:Name="Spotify" Content="Spotify" HorizontalAlignment="Left" Margin="40,229,0,0" VerticalAlignment="Top"/>
+
+                <Label x:Name="Messaging" Content="Messaging" HorizontalAlignment="Left" Margin="30,268,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="16"/>
+                <CheckBox x:Name="Zoom" Content="Zoom" HorizontalAlignment="Left" Margin="40,304,0,0" VerticalAlignment="Top"/>
+                <CheckBox x:Name="Thunderbird" Content="Thunderbird" HorizontalAlignment="Left" Margin="40,324,0,0" VerticalAlignment="Top"/>
+                <CheckBox x:Name="Discord" Content="Discord" HorizontalAlignment="Left" Margin="40,344,0,0" VerticalAlignment="Top"/>
+
+                <Label x:Name="Utilities" Content="Utilities" HorizontalAlignment="Left" Margin="250,18,0,0" VerticalAlignment="Top" FontWeight="Bold" FontSize="16"/>
+                <CheckBox x:Name="Adobe_Reader" Content="Adobe Reader" HorizontalAlignment="Left" Margin="260,54,0,0" VerticalAlignment="Top"/>
+                <CheckBox x:Name="_7_zip" Content="7-zip" HorizontalAlignment="Left" Margin="260,74,0,0" VerticalAlignment="Top"/>
+                <CheckBox x:Name="Java_SE" Content="Java SE" HorizontalAlignment="Left" Margin="260,94,0,0" VerticalAlignment="Top"/>
+
+                <Label x:Name="Security" Content="Security" HorizontalAlignment="Left" Margin="250,131,0,0" VerticalAlignment="Top" FontSize="16" FontWeight="Bold"/>
+                <CheckBox x:Name="Malwarebytes" Content="Malwarebytes" HorizontalAlignment="Left" Margin="260,163,0,0" VerticalAlignment="Top"/>
+
+                <Button x:Name="Install" Content="Install" HorizontalAlignment="Left" Margin="589,344,0,0" VerticalAlignment="Top" Width="170" Height="45"/>
+
+            </Grid>
+        </Window>
+"@
+
+#endregion
+
+#region Functions
+
+function Start-Install($App) {
     <#
     .NAME
         Start-Install
@@ -120,3 +166,53 @@ function Check-Hash($HashPath, $FilePath) {
         return 'false'
     }
 }
+
+#endregion
+
+
+#region Load GUI
+
+$Window = [Windows.Markup.XamlReader]::Parse($Xaml)
+[xml]$xml = $Xaml
+$xml.SelectNodes("//*[@Name]") | ForEach-Object { Set-Variable -Name $_.Name -Value $Window.FindName($_.Name) }
+
+#endregion
+
+#region Live Code
+
+# Web Browsers
+$Chrome = $Window.FindName('Chrome')
+$Firefox = $Window.FindName('Firefox')
+$Edge = $Window.FindName('Edge')
+$Opera = $Window.FindName('Opera')
+
+# Media
+$VLC = $Window.FindName('VLC')
+$iTunes = $Window.FindName('iTunes')
+$Spotify = $Window.FindName('Spotify')
+
+# Messaging
+$Zoom = $Window.FindName('Zoom')
+$Thunderbird = $Window.FindName('Thunderbird')
+$Discord = $Window.FindName('Discord')
+
+# Utilities
+$Adobe_Reader = $Window.FindName('Adobe_Reader')
+$_7_zip = $Window.FindName('_7_zip')
+$Java_SE = $Window.FindName('Java_SE')
+
+# Security
+$Malwarebytes = $Window.FindName('Malwarebytes')
+
+# Determine what options are checked
+$Chrome.Add_Checked({
+    Start-Install "Google.Chrome"
+})
+
+#endregion
+
+#region Show GUI
+
+$Window.ShowDialog()
+
+#endregion
