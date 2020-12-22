@@ -167,6 +167,52 @@ function Check-Hash($HashPath, $FilePath) {
     }
 }
 
+function Install-Apps {
+    # Determine what options are checked
+    if ($Chrome.IsChecked) {
+        Start-Install "Google.Chrome"
+    }
+    if ($Firefox.IsChecked) {
+        Start-Install "Mozilla.Firefox"
+    }
+    if ($Edge.IsChecked) {
+        Start-Install "Microsoft.Edge"
+    }
+    if ($Opera.IsChecked) {
+        Start-Install "Opera.Opera"
+    }
+    if ($VLC.IsChecked) {
+        Start-Install "VideoLAN.VLC"
+    }
+    if ($iTunes.IsChecked) {
+        Start-Install "Apple.iTunes"
+    }
+    if ($Spotify.IsChecked) {
+        Start-Install "Spotify.Spotify"
+    }
+    if ($Zoom.IsChecked) {
+        Start-Install "Zoom.Zoom"
+    } 
+    if ($Thunderbird.IsChecked) {
+        Start-Install "Mozilla.Thunderbird"
+    } 
+    if ($Discord.IsChecked) {
+        Start-Install "Discord.Discord"
+    } 
+    if ($Adobe_Reader.IsChecked) {
+        Start-Install "Adobe.AdobeAcrobatReaderDC"
+    }
+    if ($_7_zip.IsChecked) {
+        Start-Install "7zip.7zip"
+    }
+    if ($Java_SE.IsChecked) {
+        Start-Install "Oracle.JavaRuntimeEnvironment"
+    }
+    if ($Malwarebytes.IsChecked) {
+        Start-Install "Malwarebytes.Malwarebytes"
+    }
+}
+
 #endregion
 
 
@@ -204,10 +250,13 @@ $Java_SE = $Window.FindName('Java_SE')
 # Security
 $Malwarebytes = $Window.FindName('Malwarebytes')
 
-# Determine what options are checked
-$Chrome.Add_Checked({
-    Start-Install "Google.Chrome"
-})
+# Start installing selected applications when button is pressed
+$Button = $Window.FindName('Install')
+$Button.Add_Click(
+    {
+        Install-Apps
+    }
+)
 
 #endregion
 
