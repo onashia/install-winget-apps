@@ -262,6 +262,6 @@ $Button.Add_Click(
 
 #region Show GUI
 
-$Window.ShowDialog()
+$Window.ShowDialog() | Out-Null
 
 #endregion
